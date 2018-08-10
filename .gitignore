@@ -1,5 +1,6 @@
 /configuration_testing.json
-/package.json.lock
+package.json.lock
 /.idea
 /node_modules/
 /dummy/
+.gitignore
