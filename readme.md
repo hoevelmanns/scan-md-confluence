@@ -58,5 +58,6 @@ labels: label1, label2, label3
 Let the scan process start:
 
 ```
-$ node scan-md-confluence --scan --config=./configuration.json 
+$ ./cli.json --config=./configuration.json 
 ```
+
