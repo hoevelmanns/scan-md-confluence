@@ -27,7 +27,16 @@ $ node scan-md-confluence --config=./configuration.json
     "baseUrl":  "https://{company}.atlassian.net/wiki",
     "version": 3,
     "space": "myspace",
-    "parentPageId": 123
+    "parentPageId": 123,
+    "markDown": {
+      "codeStyling": {
+        "linenumbers": true,
+        "theme": "RDark"
+      },
+      "codeLanguageMap": {
+        "markdownLanguage": "confluenceLanguage"
+      }
+    }
   },
   "fileEncoding": "utf8",
   "scanDirectory": "/src/"
