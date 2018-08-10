@@ -1,7 +1,8 @@
 Markdown scanner and Confluence importer
 ---
 
-This project contains a NodeJs module that scans all markdowns of a specified directory recursively and imports them into Confluence as Confluence markup.
+This project contains a NodeJs module that scans all markdowns of a specified directory recursively and imports them into Confluence as Confluence markup. 
+The Confluence script can also be used to add labels to articles. 
 
 
 
@@ -12,9 +13,18 @@ Install scan-md-confluence via npm:
 $ npm install scan-md-confluence
 ```
 
-##### Usage
+Usage
+---
+
+##### Markdown files
+In order for markdowns to be processed by the scanner, corresponding markdowns must be supplemented with metadata:
+For example in top of a markdown file:
+
 ```
-$ node scan-md-confluence --config=./configuration.json
+<!--
+title: My Markdown
+labels: label1, label2, label3 
+-->
 ```
 
 ##### Configuration
@@ -41,4 +51,11 @@ $ node scan-md-confluence --config=./configuration.json
   "fileEncoding": "utf8",
   "scanDirectory": "/src/"
 }
+```
+
+##### Run the script
+Let the scan process start:
+
+```
+$ node scan-md-confluence --config=./configuration.json
 ```
