@@ -1,9 +1,9 @@
 {
   "name": "scan-md-confluence",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "A tool to scan all markdowns of a project and publish them automatically in Confluence.",
   "main": "./src/scanMdConfluence.js",
-  "license" : "BSD-3-Clause",
+  "license" : "MIT",
   "repository": {
     "type": "git",
     "url": " git+https://github.com:hoevelmanns/scan-md-confluence.git"
