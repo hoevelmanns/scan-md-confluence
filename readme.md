@@ -17,7 +17,8 @@ Usage
 ---
 
 ##### Markdown files
-In order for markdowns to be processed by the scanner, corresponding markdowns must be supplemented with metadata:
+In order for markdowns to be processed by the scanner, corresponding markdowns must be supplemented with metadata.
+
 For example in top of a markdown file:
 
 ```

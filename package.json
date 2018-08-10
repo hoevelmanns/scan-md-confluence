@@ -2,8 +2,8 @@
   "name": "scan-md-confluence",
   "version": "0.1.6",
   "description": "A tool to scan all markdowns of a project and publish them automatically in Confluence.",
-  "main": "./src/scanMdConfluence.js",
-  "license" : "MIT",
+  "main": "./dist/scanMdConfluence.js",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": " git+https://github.com:hoevelmanns/scan-md-confluence.git"
@@ -22,5 +22,12 @@
     "markdown2confluence-cws": "^2.0.4",
     "minimist": "^1.2.0",
     "path": "^0.12.7"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.0.0",
+    "babel-preset-es2015": "^6.24.1"
+  },
+  "scripts": {
+    "build": "babel ./src/scanMdConfluence.js --out-file ./dist/scanMdConfluence.js && babel ./src/utils.js --out-file ./dist/utils.js"
   }
 }

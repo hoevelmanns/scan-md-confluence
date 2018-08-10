@@ -1,108 +1,88 @@
-var
+import Utils from "./utils"
+
+const
   Confluence = require('confluence-api'),
-  klaw = require('klaw'),
-  path = require('path'),
-  fs = require('fs'),
-  appPath = process.argv[1],
-  colors = require('colors'),
   args = require('minimist')(process.argv.slice(2)),
-  markdown2confluence = require('markdown2confluence-cws'),
-  config = {},
-  self,
-  markDownFiles = [];
+  markdown2confluence = require('markdown2confluence-cws');
 
-var scanMdConfluence = module.exports = {
+export class ScanMdConfluence {
 
-  init: function () {
+  constructor() {
+
+    this.config = {};
+    this.appPath = process.argv[1];
+    this.markDownFiles = [];
+    this.utils = new Utils();
+
+  }
+
+  loadConfig() {
 
     if (!args || !args.hasOwnProperty('config')) {
-      this.displayError("Error: You must specify the configuration file with the parameter '--config=/path/configuration.json'");
+      this.utils.displayError("Error: You must specify the configuration file with the parameter '--config=/path/configuration.json'");
       return;
     }
 
     try {
 
-      config = require(appPath + '/../../' + args.config);
+      // todo use this: config = require(this.appPath + '/../../' + args.config);
+      this.config = require(args.config);
 
-      if (!this.isConfigValid()) {
+      if (!this.utils.isConfigValid(this.config)) {
         return;
       }
 
-      this.confluence = new Confluence(config.confluence);
+      this.confluence = new Confluence(this.config.confluence);
 
       return this.confluence;
 
     } catch (e) {
 
-      this.displayError("Error: The specified configuration file was not found.", e);
+      this.utils.displayError("Error: The specified configuration file was not found.", e);
 
     }
+  }
 
-  },
+  processMarkdowns() {
 
-  processMarkdowns: function () {
+    this.utils
+      .scanMarkdowns(this.config.scanDirectory).then(files => {
 
-    self = this;
+      files.forEach(file => {
 
-    this.scanForMarkDowns().then(function () {
+        this.utils.readFile(file).then(content => {
 
-      markDownFiles.forEach(function (file) {
-        self.read(file).then(function (content) {
-
-          var metaData = self.parseMeta(content);
+          const metaData = this.parseMeta(content);
 
           if (!metaData) {
             return;
           }
 
-          content = content.replace(self.metaStr(content), '');
+          content = content.replace(this.getMetaString(content), '');
 
-          self.pushMarkdown(metaData, content, config.confluence.parentPageId).then(function (pageId) {
+          this.pushMarkdown(metaData, content, this.config.confluence.parentPageId).then(pageId => {
 
             if (!pageId || !metaData.labels) {
               return;
             }
 
-            self.postLabels(pageId, metaData.labels);
+            this.postLabels(pageId, metaData.labels);
 
           });
 
         })
       });
 
-    }).catch(function (e) {
-      self.displayError("Directory '" + config.scanDirectory + "' does not exist. \n", e);
+    }).catch((e) => {
+      this.utils.displayError("Directory '" + config.scanDirectory + "' does not exist. \n", e);
     })
 
-  },
+  }
 
-  read: function (path) {
+  prepareLabels(labels) {
+    const prepared = [];
 
-    return new Promise(function (resolve, reject) {
-      fs.readFile(path, config.fileEncoding || 'utf8', function (err, data) {
-
-        if (err) {
-          reject(err)
-        }
-
-        resolve(data);
-
-      });
-    });
-
-  },
-
-  metaStr: function (text) {
-
-    return text.match(/<!--*[\s\S]*?\-->*$/gm);
-
-  },
-
-  prepareLabels: function (labels) {
-
-    var prepared = [];
-
-    labels.split(',').map(function (item) {
+    labels.split(',').map(item => {
       prepared.push({
         "prefix": "global",
         "name": item.trim().toLowerCase()
@@ -110,14 +90,16 @@ var scanMdConfluence = module.exports = {
     });
 
     return prepared;
+  }
 
-  },
+  getMetaString(text) {
+    return text.match(/<!--*[\s\S]*?\-->*$/gm);
+  }
 
-  parseMeta: function (text) {
-
-    var
+  parseMeta(text) {
+    const
       metaData = {},
-      matches = this.metaStr(text);
+      matches = this.getMetaString(text);
 
     if (!matches || !matches.length) {
       return;
@@ -127,191 +109,106 @@ var scanMdConfluence = module.exports = {
       .replace('<!--', '')
       .replace('-->', '')
       .split('\n')
-      .filter(function (key) {
+      .filter((key) => {
         return key.length > 0
       })
-      .map(function (item) {
+      .map((item) => {
         return item.split(':')
       })
-      .map(function (item) {
+      .map((item) => {
         metaData[item[0]] = item[1].trim();
       });
 
     return metaData;
+  }
 
-  },
 
-  scanForMarkDowns: function () {
+  getPage(pageTitle) {
 
-    self = this;
+    return new Promise((resolve, reject) => {
+      this.confluence
+        .getContentByPageTitle(this.config.confluence.space, pageTitle, (err, data) => {
 
-    return new Promise(function (resolve, reject) {
-      klaw(config.scanDirectory)
-        .on('data', function (item) {
-
-          if (path.extname(item.path) !== ".md") {
-            return;
+          if (err) {
+            this.utils.displayError("Page not found: ", pageTitle);
           }
 
-          markDownFiles.push(item.path);
-
+          resolve(data);
         })
-        .on('end', resolve)
-        .on('error', reject)
     });
 
-  },
+  }
 
+  async pushMarkdown(metaData, content, parentId) {
 
-  getPage: function (pageTitle) {
+    return new Promise((resolve, reject) => {
 
-    self = this;
+      content = markdown2confluence(content, this.config.confluence.markDown || null);
+      parentId = parentId || this.config.confluence.parentPageId;
 
-    return new Promise(function (resolve, reject) {
-      self.confluence.getContentByPageTitle(config.confluence.space, pageTitle, function (err, data) {
-
-        if (err) {
-          self.displayError("Page not found: ", pageTitle);
-        }
-
-        resolve(data);
-
-      })
-    });
-
-  },
-
-  postLabels: function (pageId, labels) {
-
-    self = this;
-
-    if (!pageId || !labels || !labels.length) {
-      return;
-    }
-
-    return new Promise(function (resolve, reject) {
-      self.confluence.postLabels(pageId, self.prepareLabels(labels), function (data) {
-        self.displayInfo("Labels created/updated for page " + pageId + ": ", labels);
-        resolve(data);
-      });
-    })
-
-  },
-
-  pushMarkdown: function (metaData, content, parentId) {
-
-    self = this;
-
-    return new Promise(function (resolve, reject) {
-
-      content = markdown2confluence(content, config.confluence.markDown || null);
-      parentId = parentId || config.confluence.parentPageId;
-
-      var
+      let
         pageData,
         version;
 
-      self.getPage(metaData.title).then(function (page) {
+      this.getPage(metaData.title).then(page => {
 
         if (page.hasOwnProperty('results') && page.results.length) {
           pageData = page.results[0];
           version = pageData.version.number + 1;
 
-          self.confluence.putContent(config.confluence.space, pageData.id, version, pageData.title, content, function (err, data) {
+          this.confluence
+            .putContent(this.config.confluence.space, pageData.id, version, pageData.title, content, (err, data) => {
 
-            if (err || data.body.statusCode === 400) {
-              return reject(err);
-            }
+              if (err || data.body.statusCode === 400) {
+                return reject(err);
+              }
 
-            self.displayInfo("Page updated: ", pageData.id + ", " + pageData.title);
-            resolve(data.id);
+              this.utils.displayInfo("Page updated: ", pageData.id + ", " + pageData.title);
 
-          }, false, 'wiki');
+              resolve(data.id);
+
+            }, false, 'wiki');
         } else {
-          self.confluence.postContent(config.confluence.space, metaData.title, content, parentId, function (err, data) {
+          this.confluence
+            .postContent(this.config.confluence.space, metaData.title, content, parentId, (err, data) => {
 
-            if (err || data.body.statusCode === 400) {
-              return reject(err);
-            }
+              if (err || data.body.statusCode === 400) {
+                return reject(err);
+              }
 
-            self.displaySuccess("Page created: ", data.id + ", " + metaData.title);
-            resolve(data.id);
+              this.utils.displaySuccess("Page created: ", data.id + ", " + metaData.title);
 
-          }, 'wiki');
+              resolve(data.id);
+
+            }, 'wiki');
         }
 
       });
     });
-
-  },
-
-  displayError: function (message, values) {
-
-    if (!values) {
-      values = "";
-    }
-
-    console.error(colors.red(String.fromCharCode("0x2718") + " " + message), colors.bold(values));
-
-  },
-
-  displaySuccess: function (message, values) {
-
-    if (!values) {
-      values = "";
-    }
-
-    console.info(colors.green(String.fromCharCode("0x2705") + " " + message), colors.bold(values));
-
-  },
-
-  displayInfo: function (message, values) {
-
-    if (!values) {
-      values = "";
-    }
-
-    console.info(colors.yellow(String.fromCharCode("0x2705") + " " + message), colors.bold(values));
-
-  },
-
-  isConfigValid: function () {
-    var
-      required = [
-        'confluence',
-        'scanDirectory',
-        'confluence.username',
-        'confluence.password',
-        'confluence.baseUrl',
-        'confluence.version',
-        'confluence.space',
-        'confluence.parentPageId'
-      ],
-      missing = [],
-      splittedKey;
-
-    required.forEach(function (key) {
-
-      splittedKey = key.split(".");
-
-      if (splittedKey.length === 1) {
-        !config[key] ? missing.push(key) : missing;
-      } else if (splittedKey.length === 2) {
-        !config[splittedKey[0]][splittedKey[1]] ? missing.push(key) : missing;
-      }
-
-    });
-
-    if (missing.length) {
-
-      this.displayError("Configuration ist not valid! Keys missing: ", missing.join(", "));
-
-    }
-
-    return missing.length === 0;
   }
-};
 
-if (scanMdConfluence.init()) {
+  postLabels(pageId, labels) {
+
+    if (!pageId || !labels || !labels.length) {
+      return;
+    }
+
+    const preparedLabels = this.prepareLabels(labels);
+
+    return new Promise((resolve, reject) => {
+      this.confluence.postLabels(pageId, preparedLabels, data => {
+        this.utils.displayInfo("Labels created/updated for page " + pageId + ": ", labels);
+        resolve(data);
+      });
+    })
+  }
+
+
+}
+
+
+const scanMdConfluence = module.exports = new ScanMdConfluence();
+
+if (scanMdConfluence.loadConfig()) {
   scanMdConfluence.processMarkdowns();
 }
