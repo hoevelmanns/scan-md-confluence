@@ -42,7 +42,7 @@ export default class Utils {
 
   }
 
-  displayError(message, values) {
+  displayError(message, values = null) {
 
     if (!values) {
       values = "";
@@ -52,7 +52,7 @@ export default class Utils {
 
   }
 
-  displaySuccess(message, values) {
+  displaySuccess(message, values = null) {
 
     if (!values) {
       values = "";
@@ -62,7 +62,7 @@ export default class Utils {
 
   }
 
-  displayInfo(message, values) {
+  displayInfo(message, values = null) {
 
     if (!values) {
       values = "";

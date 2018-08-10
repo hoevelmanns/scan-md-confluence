@@ -56,7 +56,9 @@ var Utils = function () {
     }
   }, {
     key: 'displayError',
-    value: function displayError(message, values) {
+    value: function displayError(message) {
+      var values = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+
 
       if (!values) {
         values = "";
@@ -66,7 +68,9 @@ var Utils = function () {
     }
   }, {
     key: 'displaySuccess',
-    value: function displaySuccess(message, values) {
+    value: function displaySuccess(message) {
+      var values = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+
 
       if (!values) {
         values = "";
@@ -76,7 +80,9 @@ var Utils = function () {
     }
   }, {
     key: 'displayInfo',
-    value: function displayInfo(message, values) {
+    value: function displayInfo(message) {
+      var values = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+
 
       if (!values) {
         values = "";

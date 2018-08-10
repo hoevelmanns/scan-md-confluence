@@ -16,7 +16,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var Confluence = require('confluence-api'),
-    args = require('minimist')(process.argv.slice(2)),
     markdown2confluence = require('markdown2confluence-cws');
 
 var ScanMdConfluence = exports.ScanMdConfluence = function () {
@@ -29,28 +28,27 @@ var ScanMdConfluence = exports.ScanMdConfluence = function () {
 
   _createClass(ScanMdConfluence, [{
     key: 'loadConfig',
-    value: function loadConfig() {
+    value: function loadConfig(configFile) {
 
-      if (!args || !args.hasOwnProperty('config')) {
-        this.utils.displayError("Error: You must specify the configuration file with the parameter '--config=/path/configuration.json'");
-        return;
+      if (!configFile) {
+        return this.utils.displayError("Error: You must specify the configuration file with the parameter '--config=/path/configuration.json'");
       }
 
       try {
 
-        this.config = require(__dirname + '/../../' + args.config);
+        this.config = require(__dirname + "/../" + configFile);
 
         if (!this.utils.isConfigValid(this.config)) {
-          return;
+          return false;
         }
-
-        this.confluence = new Confluence(this.config.confluence);
-
-        return this.confluence;
       } catch (e) {
 
-        this.utils.displayError("Error: The specified configuration file was not found.", e);
+        return this.utils.displayError("Error: The specified configuration file was not found.", e);
       }
+
+      this.confluence = new Confluence(this.config.confluence);
+
+      return this.confluence;
     }
   }, {
     key: 'processMarkdowns',
@@ -207,8 +205,4 @@ var ScanMdConfluence = exports.ScanMdConfluence = function () {
   return ScanMdConfluence;
 }();
 
-var scanMdConfluence = module.exports = new ScanMdConfluence();
-
-if (args && (args.hasOwnProperty('s') || args.hasOwnProperty('scan')) && scanMdConfluence.loadConfig()) {
-  scanMdConfluence.processMarkdowns();
-}
+var scanMdConfluence = module.exports = ScanMdConfluence;

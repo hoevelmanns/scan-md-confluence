@@ -1,5 +1,5 @@
 /configuration_testing.json
-package.json.lock
+package-lock.json
 /.idea
 /node_modules/
 /dummy/

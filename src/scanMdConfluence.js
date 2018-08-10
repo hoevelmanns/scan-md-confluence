@@ -2,7 +2,6 @@ import Utils from "./utils"
 
 const
   Confluence = require('confluence-api'),
-  args = require('minimist')(process.argv.slice(2)),
   markdown2confluence = require('markdown2confluence-cws');
 
 export class ScanMdConfluence {
@@ -13,30 +12,29 @@ export class ScanMdConfluence {
     this.utils = new Utils();
   }
 
-  loadConfig() {
+  loadConfig(configFile) {
 
-    if (!args || !args.hasOwnProperty('config')) {
-      this.utils.displayError("Error: You must specify the configuration file with the parameter '--config=/path/configuration.json'");
-      return;
+    if (!configFile) {
+      return this.utils.displayError("Error: You must specify the configuration file with the parameter '--config=/path/configuration.json'");
     }
 
     try {
 
-      this.config = require(__dirname + '/../../' + args.config);
+      this.config = require(__dirname + "/../" + configFile);
 
       if (!this.utils.isConfigValid(this.config)) {
-        return;
+        return false;
       }
-
-      this.confluence = new Confluence(this.config.confluence);
-
-      return this.confluence;
 
     } catch (e) {
 
-      this.utils.displayError("Error: The specified configuration file was not found.", e);
+      return this.utils.displayError("Error: The specified configuration file was not found.", e);
 
     }
+
+    this.confluence = new Confluence(this.config.confluence);
+
+    return this.confluence;
   }
 
   processMarkdowns() {
@@ -200,8 +198,4 @@ export class ScanMdConfluence {
   }
 }
 
-const scanMdConfluence = module.exports = new ScanMdConfluence();
-
-if (args && (args.hasOwnProperty('s') || args.hasOwnProperty('scan')) && scanMdConfluence.loadConfig()) {
-  scanMdConfluence.processMarkdowns();
-}
+const scanMdConfluence = module.exports = ScanMdConfluence;
