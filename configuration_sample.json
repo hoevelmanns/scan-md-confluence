@@ -1,0 +1,21 @@
+{
+  "confluence": {
+    "username": "username",
+    "password": "password",
+    "baseUrl":  "https://{company}.atlassian.net/wiki",
+    "version": 3,
+    "space": "myspace",
+    "parentPageId": 123,
+    "markDown": {
+      "codeStyling": {
+        "linenumbers": true,
+        "theme": "RDark"
+      },
+      "codeLanguageMap": {
+        "markdownLanguage": "confluenceLanguage"
+      }
+    }
+  },
+  "fileEncoding": "utf8",
+  "scanDirectory": "/src/"
+}

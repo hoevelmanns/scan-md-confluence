@@ -1,0 +1,26 @@
+{
+  "name": "scan-md-confluence",
+  "version": "0.1.3",
+  "description": "A tool to scan all markdowns of a project and publish them automatically in Confluence.",
+  "main": "./src/scanMdConfluence.js",
+  "license" : "BSD-3-Clause",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ashleygwilliams/my_package.git"
+  },
+  "keywords": [
+    "markdown",
+    "scanner",
+    "confluence"
+  ],
+  "author": "Marcelle Hövelmanns <marcelle@hoevelmanns.io> (http://hoevelmanns.io)",
+  "dependencies": {
+    "colors": "^1.3.1",
+    "confluence-api": "^1.3.0",
+    "fs": "0.0.1-security",
+    "klaw": "^3.0.0",
+    "markdown2confluence-cws": "^2.0.4",
+    "minimist": "^1.2.0",
+    "path": "^0.12.7"
+  }
+}
