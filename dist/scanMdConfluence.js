@@ -40,8 +40,7 @@ var ScanMdConfluence = exports.ScanMdConfluence = function () {
 
       try {
 
-        // todo use this: config = require(this.appPath + '/../../' + args.config);
-        this.config = require(args.config);
+        this.config = require(this.appPath + '/../../' + args.config);
 
         if (!this.utils.isConfigValid(this.config)) {
           return;
