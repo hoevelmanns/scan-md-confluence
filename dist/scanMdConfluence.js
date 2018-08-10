@@ -36,7 +36,7 @@ var ScanMdConfluence = exports.ScanMdConfluence = function () {
 
       try {
 
-        this.config = require(__dirname + "/../" + configFile);
+        this.config = require(configFile);
 
         if (!this.utils.isConfigValid(this.config)) {
           return false;
@@ -55,7 +55,7 @@ var ScanMdConfluence = exports.ScanMdConfluence = function () {
     value: function processMarkdowns() {
       var _this = this;
 
-      this.utils.scanMarkdowns(this.config.scanDirectory).then(function (files) {
+      this.utils.scanMarkdowns(process.cwd() + "/" + this.config.scanDirectory).then(function (files) {
 
         files.forEach(function (file) {
 

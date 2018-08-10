@@ -6,7 +6,7 @@ var
   scanMdConfluence = require('./dist/scanMdConfluence'),
   scanner = new scanMdConfluence();
 
-if (args && scanner.loadConfig(args.config)) {
+if (args && scanner.loadConfig(process.cwd() + "/" + args.config)) {
   scanner.utils.displayInfo("Configuration is valid. Scanning markdowns and update confluence. Please wait...");
   scanner.processMarkdowns();
 }

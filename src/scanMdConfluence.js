@@ -20,7 +20,7 @@ export class ScanMdConfluence {
 
     try {
 
-      this.config = require(__dirname + "/../" + configFile);
+      this.config = require(configFile);
 
       if (!this.utils.isConfigValid(this.config)) {
         return false;
@@ -40,7 +40,7 @@ export class ScanMdConfluence {
   processMarkdowns() {
 
     this.utils
-      .scanMarkdowns(this.config.scanDirectory).then(files => {
+      .scanMarkdowns(process.cwd() + "/" + this.config.scanDirectory).then(files => {
 
       files.forEach(file => {
 
