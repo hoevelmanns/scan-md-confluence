@@ -10,10 +10,7 @@ export class ScanMdConfluence {
   constructor() {
 
     this.config = {};
-    this.appPath = process.argv[1];
-    this.markDownFiles = [];
     this.utils = new Utils();
-
   }
 
   loadConfig() {
@@ -25,7 +22,7 @@ export class ScanMdConfluence {
 
     try {
 
-      this.config = require(this.appPath + '/../../' + args.config);
+      this.config = require(__dirname + '/../../' + args.config);
 
       if (!this.utils.isConfigValid(this.config)) {
         return;
@@ -201,13 +198,10 @@ export class ScanMdConfluence {
       });
     })
   }
-
-
 }
-
 
 const scanMdConfluence = module.exports = new ScanMdConfluence();
 
-if (scanMdConfluence.loadConfig()) {
+if (args && (args.hasOwnProperty('s') || args.hasOwnProperty('scan')) && scanMdConfluence.loadConfig()) {
   scanMdConfluence.processMarkdowns();
 }

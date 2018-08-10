@@ -24,8 +24,6 @@ var ScanMdConfluence = exports.ScanMdConfluence = function () {
     _classCallCheck(this, ScanMdConfluence);
 
     this.config = {};
-    this.appPath = process.argv[1];
-    this.markDownFiles = [];
     this.utils = new _utils2.default();
   }
 
@@ -40,7 +38,7 @@ var ScanMdConfluence = exports.ScanMdConfluence = function () {
 
       try {
 
-        this.config = require(this.appPath + '/../../' + args.config);
+        this.config = require(__dirname + '/../../' + args.config);
 
         if (!this.utils.isConfigValid(this.config)) {
           return;
@@ -211,6 +209,6 @@ var ScanMdConfluence = exports.ScanMdConfluence = function () {
 
 var scanMdConfluence = module.exports = new ScanMdConfluence();
 
-if (scanMdConfluence.loadConfig()) {
+if (args && (args.hasOwnProperty('s') || args.hasOwnProperty('scan')) && scanMdConfluence.loadConfig()) {
   scanMdConfluence.processMarkdowns();
 }

@@ -1,6 +1,6 @@
 {
   "name": "scan-md-confluence",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "A tool to scan all markdowns of a project and publish them automatically in Confluence.",
   "main": "./dist/scanMdConfluence.js",
   "license": "MIT",
