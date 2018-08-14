@@ -94,7 +94,6 @@ var ScanMdConfluence = exports.ScanMdConfluence = function () {
   }, {
     key: "prepareLabels",
     value: function prepareLabels(labels) {
-      console.log("lasdfsadf", labels);
       var prepared = [];
 
       labels.split(',').map(function (item) {
