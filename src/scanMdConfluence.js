@@ -10,6 +10,7 @@ export class ScanMdConfluence {
   constructor() {
     this.utils = new Utils();
     this.confluenceApi = null;
+    this.readline = require('readline-sync');
     this.markdown2confluence = require('markdown2confluence-cws');
     this.config = {
       confluence: {
@@ -38,16 +39,29 @@ export class ScanMdConfluence {
 
     const config = new Config(configFile);
 
-    if (!config.isValid()) return;
+    return new Promise((resolve, reject) => {
 
-    this.config = config.data();
+      if (!this.config.confluence.password) {
+        config.setPassword(
+          this.readline.question('Please type your Confluence password: ', {
+            hideEchoBack: true
+          }));
+      }
 
-    this.confluenceApi = new Confluence(this.config.confluence);
+      if (!config.isValid()) return reject();
 
-    return this.confluenceApi;
+      this.config = config.data();
+
+      this.confluenceApi = new Confluence(this.config.confluence);
+
+      return resolve(this.confluenceApi);
+
+    });
+
   }
 
   processMarkdowns() {
+
     this.utils
       .scanMarkdowns(process.cwd() + "/" + this.config.scanDirectory)
       .then(files => {
@@ -130,7 +144,7 @@ export class ScanMdConfluence {
 
   }
 
-  async pushMarkdown(metaData, content, parentId) {
+  async pushMarkdown(metaData, content) {
 
     return new Promise((resolve, reject) => {
 
@@ -146,8 +160,8 @@ export class ScanMdConfluence {
             .setTitle(metaData.title)
             .create().then(resolve)
             .catch((e) => {
-              this.utils.displayError("Error creating page", e);
-              reject(e);
+              this.utils.displayError("Error creating page", e.statusCode);
+              return reject(e);
             });
 
         } else {
@@ -158,7 +172,7 @@ export class ScanMdConfluence {
             .then(resolve)
             .catch((e) => {
               this.utils.displayError("Conflict updating page ", page.getTitle(), page.getId());
-              reject(e);
+              return reject(e);
             });
         }
       });

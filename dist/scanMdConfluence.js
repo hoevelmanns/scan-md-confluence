@@ -27,6 +27,7 @@ var ScanMdConfluence = exports.ScanMdConfluence = function () {
 
     this.utils = new _utils2.default();
     this.confluenceApi = null;
+    this.readline = require('readline-sync');
     this.markdown2confluence = require('markdown2confluence-cws');
     this.config = {
       confluence: {
@@ -54,41 +55,51 @@ var ScanMdConfluence = exports.ScanMdConfluence = function () {
   _createClass(ScanMdConfluence, [{
     key: "init",
     value: function init(configFile) {
+      var _this = this;
 
       var config = new _config.Config(configFile);
 
-      if (!config.isValid()) return;
+      return new Promise(function (resolve, reject) {
 
-      this.config = config.data();
+        if (!_this.config.confluence.password) {
+          config.setPassword(_this.readline.question('Please type your Confluence password: ', {
+            hideEchoBack: true
+          }));
+        }
 
-      this.confluenceApi = new Confluence(this.config.confluence);
+        if (!config.isValid()) return reject();
 
-      return this.confluenceApi;
+        _this.config = config.data();
+
+        _this.confluenceApi = new Confluence(_this.config.confluence);
+
+        return resolve(_this.confluenceApi);
+      });
     }
   }, {
     key: "processMarkdowns",
     value: function processMarkdowns() {
-      var _this = this;
+      var _this2 = this;
 
       this.utils.scanMarkdowns(process.cwd() + "/" + this.config.scanDirectory).then(function (files) {
 
         files.forEach(function (file) {
 
-          _this.utils.readFile(file).then(function (content) {
+          _this2.utils.readFile(file).then(function (content) {
 
-            var metaData = _this.parseMeta(content);
+            var metaData = _this2.parseMeta(content);
 
             if (!metaData) return;
 
-            content = content.replace(_this.getMetaString(content), '');
+            content = content.replace(_this2.getMetaString(content), '');
 
-            _this.pushMarkdown(metaData, content, _this.config.confluence.parentPageId).then(function () {
-              _this.utils.displaySuccess("Confluence pages successfully updated.");
+            _this2.pushMarkdown(metaData, content, _this2.config.confluence.parentPageId).then(function () {
+              _this2.utils.displaySuccess("Confluence pages successfully updated.");
             });
           });
         });
       }).catch(function (e) {
-        _this.utils.displayError("Directory '" + _this.config.scanDirectory + "' does not exist. \n", e);
+        _this2.utils.displayError("Directory '" + _this2.config.scanDirectory + "' does not exist. \n", e);
       });
     }
   }, {
@@ -133,36 +144,36 @@ var ScanMdConfluence = exports.ScanMdConfluence = function () {
   }, {
     key: "getPage",
     value: function getPage(pageTitle) {
-      var _this2 = this;
+      var _this3 = this;
 
       return new Promise(function (resolve) {
-        _this2.confluenceApi.getContentByPageTitle(_this2.config.confluence.space, pageTitle, function (err, data) {
-          return resolve(new _page.ConfluencePage(_this2.confluenceApi, data, _this2.config));
+        _this3.confluenceApi.getContentByPageTitle(_this3.config.confluence.space, pageTitle, function (err, data) {
+          return resolve(new _page.ConfluencePage(_this3.confluenceApi, data, _this3.config));
         });
       });
     }
   }, {
     key: "pushMarkdown",
-    value: async function pushMarkdown(metaData, content, parentId) {
-      var _this3 = this;
+    value: async function pushMarkdown(metaData, content) {
+      var _this4 = this;
 
       return new Promise(function (resolve, reject) {
 
-        _this3.getPage(metaData.title).then(function (page) {
+        _this4.getPage(metaData.title).then(function (page) {
 
-          page.setContent(content).setLabels(_this3.prepareLabels(metaData.labels));
+          page.setContent(content).setLabels(_this4.prepareLabels(metaData.labels));
 
           if (!page.id) {
 
             page.setTitle(metaData.title).create().then(resolve).catch(function (e) {
-              _this3.utils.displayError("Error creating page", e);
-              reject(e);
+              _this4.utils.displayError("Error creating page", e.statusCode);
+              return reject(e);
             });
           } else {
 
             page.setVersion(++page.version).update().then(resolve).catch(function (e) {
-              _this3.utils.displayError("Conflict updating page ", page.getTitle(), page.getId());
-              reject(e);
+              _this4.utils.displayError("Conflict updating page ", page.getTitle(), page.getId());
+              return reject(e);
             });
           }
         });

@@ -1,6 +1,6 @@
 {
   "name": "scan-md-confluence",
-  "version": "0.1.9",
+  "version": "0.2.0",
   "description": "A tool to scan all markdowns of a project and publish them automatically in Confluence.",
   "main": "index.js",
   "bin": {
@@ -24,7 +24,8 @@
     "klaw": "^3.0.0",
     "markdown2confluence-cws": "^2.0.4",
     "minimist": "^1.2.0",
-    "path": "^0.12.7"
+    "path": "^0.12.7",
+    "readline-sync": "^1.4.9"
   },
   "devDependencies": {
     "babel-cli": "^6.0.0",
