@@ -20,7 +20,7 @@ var Utils = function () {
 
   _createClass(Utils, [{
     key: 'readFile',
-    value: function readFile(path) {
+    value: async function readFile(path) {
 
       return new Promise(function (resolve, reject) {
         fs.readFile(path, 'utf8', function (err, data) {
@@ -89,32 +89,6 @@ var Utils = function () {
       }
 
       console.info(colors.yellow(String.fromCharCode("0x2705") + " " + message), colors.bold(values));
-    }
-  }, {
-    key: 'isConfigValid',
-    value: function isConfigValid(config) {
-      var required = ['confluence', 'scanDirectory', 'confluence.username', 'confluence.password', 'confluence.baseUrl', 'confluence.version', 'confluence.space', 'confluence.parentPageId'],
-          missing = [];
-
-      var splittedKey = void 0;
-
-      required.forEach(function (key) {
-
-        splittedKey = key.split(".");
-
-        if (splittedKey.length === 1) {
-          !config[key] ? missing.push(key) : missing;
-        } else if (splittedKey.length === 2) {
-          !config[splittedKey[0]][splittedKey[1]] ? missing.push(key) : missing;
-        }
-      });
-
-      if (missing.length) {
-
-        this.displayError("Configuration ist not valid! Keys missing: ", missing.join(", "));
-      }
-
-      return missing.length === 0;
     }
   }]);
 

@@ -1,76 +1,79 @@
 import Utils from "./utils"
+import {ConfluencePage} from "./page";
+import {Config} from "./config";
 
 const
-  Confluence = require('confluence-api'),
-  markdown2confluence = require('markdown2confluence-cws');
+  Confluence = require('confluence-api');
 
 export class ScanMdConfluence {
 
   constructor() {
-
-    this.config = {};
     this.utils = new Utils();
+    this.confluenceApi = null;
+    this.markdown2confluence = require('markdown2confluence-cws');
+    this.config = {
+      confluence: {
+        username: "",
+        password: "",
+        baseUrl: "",
+        version: 3,
+        space: "",
+        parentPageId: 0,
+        markDown: {
+          codeStyling: {
+            linenumbers: true,
+            theme: "RDark"
+          },
+          codeLanguageMap: {
+            markdownLanguage: "confluenceLanguage"
+          }
+        }
+      },
+      "fileEncoding": "utf8",
+      "scanDirectory": null
+    };
   }
 
-  loadConfig(configFile) {
+  init(configFile) {
 
-    if (!configFile) {
-      return this.utils.displayError("Error: You must specify the configuration file with the parameter '--config=/path/configuration.json'");
-    }
+    const config = new Config(configFile);
 
-    try {
+    if (!config.isValid()) return;
 
-      this.config = require(configFile);
+    this.config = config.data();
 
-      if (!this.utils.isConfigValid(this.config)) {
-        return false;
-      }
+    this.confluenceApi = new Confluence(this.config.confluence);
 
-    } catch (e) {
-
-      return this.utils.displayError("Error: The specified configuration file was not found.", e);
-
-    }
-
-    this.confluence = new Confluence(this.config.confluence);
-
-    return this.confluence;
+    return this.confluenceApi;
   }
 
   processMarkdowns() {
-
     this.utils
-      .scanMarkdowns(process.cwd() + "/" + this.config.scanDirectory).then(files => {
+      .scanMarkdowns(process.cwd() + "/" + this.config.scanDirectory)
+      .then(files => {
 
-      files.forEach(file => {
+        files.forEach(file => {
 
-        this.utils.readFile(file).then(content => {
+          this.utils.readFile(file).then(content => {
 
-          const metaData = this.parseMeta(content);
+            const metaData = this.parseMeta(content);
 
-          if (!metaData) {
-            return;
-          }
+            if (!metaData) return;
 
-          content = content.replace(this.getMetaString(content), '');
+            content = content.replace(this.getMetaString(content), '');
 
-          this.pushMarkdown(metaData, content, this.config.confluence.parentPageId).then(pageId => {
+            this
+              .pushMarkdown(metaData, content, this.config.confluence.parentPageId)
+              .then(() => {
+                this.utils.displaySuccess("Confluence pages successfully updated.")
+              });
 
-            if (!pageId || !metaData.labels) {
-              return;
-            }
+          })
+        });
 
-            this.postLabels(pageId, metaData.labels);
-
-          });
-
-        })
-      });
-
-    }).catch((e) => {
-      this.utils.displayError("Directory '" + config.scanDirectory + "' does not exist. \n", e);
-    })
-
+      }).catch((e) => {
+      this.utils.displayError("Directory '" + this.config.scanDirectory + "' does not exist. \n", e);
+    });
   }
 
   prepareLabels(labels) {
@@ -119,16 +122,10 @@ export class ScanMdConfluence {
 
   getPage(pageTitle) {
 
-    return new Promise((resolve, reject) => {
-      this.confluence
-        .getContentByPageTitle(this.config.confluence.space, pageTitle, (err, data) => {
-
-          if (err) {
-            this.utils.displayError("Page not found: ", pageTitle);
-          }
-
-          resolve(data);
-        })
+    return new Promise(resolve => {
+      this.confluenceApi
+        .getContentByPageTitle(this.config.confluence.space, pageTitle, (err, data) =>
+          resolve(new ConfluencePage(this.confluenceApi, data, this.config)))
     });
 
   }
@@ -137,64 +134,35 @@ export class ScanMdConfluence {
 
     return new Promise((resolve, reject) => {
 
-      content = markdown2confluence(content, this.config.confluence.markDown || null);
-      parentId = parentId || this.config.confluence.parentPageId;
-
-      let
-        pageData,
-        version;
-
       this.getPage(metaData.title).then(page => {
 
-        if (page.hasOwnProperty('results') && page.results.length) {
-          pageData = page.results[0];
-          version = pageData.version.number + 1;
+        page
+          .setContent(content)
+          .setLabels(this.prepareLabels(metaData.labels));
 
-          this.confluence
-            .putContent(this.config.confluence.space, pageData.id, version, pageData.title, content, (err, data) => {
+        if (!page.id) {
 
-              if (err || data.body.statusCode === 400) {
-                return reject(err);
-              }
+          page
+            .setTitle(metaData.title)
+            .create().then(resolve)
+            .catch((e) => {
+              this.utils.displayError("Error creating page", e);
+              reject(e);
+            });
 
-              this.utils.displayInfo("Page updated: ", pageData.id + ", " + pageData.title);
-
-              resolve(data.id);
-
-            }, false, 'wiki');
         } else {
-          this.confluence
-            .postContent(this.config.confluence.space, metaData.title, content, parentId, (err, data) => {
 
-              if (err || data.body.statusCode === 400) {
-                return reject(err);
-              }
-
-              this.utils.displaySuccess("Page created: ", data.id + ", " + metaData.title);
-
-              resolve(data.id);
-
-            }, 'wiki');
+          page
+            .setVersion(++page.version)
+            .update()
+            .then(resolve)
+            .catch((e) => {
+              this.utils.displayError("Conflict updating page ", page.getTitle(), page.getId());
+              reject(e);
+            });
         }
-
       });
     });
-  }
-
-  postLabels(pageId, labels) {
-
-    if (!pageId || !labels || !labels.length) {
-      return;
-    }
-
-    const preparedLabels = this.prepareLabels(labels);
-
-    return new Promise((resolve, reject) => {
-      this.confluence.postLabels(pageId, preparedLabels, data => {
-        this.utils.displayInfo("Labels created/updated for page " + pageId + ": ", labels);
-        resolve(data);
-      });
-    })
   }
 }
 

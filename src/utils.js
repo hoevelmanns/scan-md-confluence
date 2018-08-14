@@ -6,7 +6,7 @@ const
 
 export default class Utils {
 
-  readFile(path) {
+  async readFile(path) {
 
     return new Promise(function (resolve, reject) {
       fs.readFile(path, 'utf8', function (err, data) {
@@ -70,43 +70,6 @@ export default class Utils {
 
     console.info(colors.yellow(String.fromCharCode("0x2705") + " " + message), colors.bold(values));
 
-  }
-
-  isConfigValid(config) {
-    const
-      required = [
-        'confluence',
-        'scanDirectory',
-        'confluence.username',
-        'confluence.password',
-        'confluence.baseUrl',
-        'confluence.version',
-        'confluence.space',
-        'confluence.parentPageId'
-      ],
-      missing = [];
-
-      let splittedKey;
-
-    required.forEach( key => {
-
-      splittedKey = key.split(".");
-
-      if (splittedKey.length === 1) {
-        !config[key] ? missing.push(key) : missing;
-      } else if (splittedKey.length === 2) {
-        !config[splittedKey[0]][splittedKey[1]] ? missing.push(key) : missing;
-      }
-
-    });
-
-    if (missing.length) {
-
-      this.displayError("Configuration ist not valid! Keys missing: ", missing.join(", "));
-
-    }
-
-    return missing.length === 0;
   }
 
 }
