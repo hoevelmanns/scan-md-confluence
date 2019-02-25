@@ -58,6 +58,6 @@ labels: label1, label2, label3
 Let the scan process start:
 
 ```
-$ ./cli.json --config=./configuration.json 
+$ ./cli.js --config=./configuration.json 
 ```
 
